@@ -99,6 +99,7 @@ function nn.fromJSON(str)
 			node.o, node.d = 0, 0
 		end
 	end
+	setmetatable(self, nn)
 	return self
 end
 
@@ -296,7 +297,7 @@ function nn:Cost(expected)
 			local deriv_function = 
 				i==#self.layers and activation_functions[self.settings.OutputActivation]
 				or activation_functions[self.settings.HiddenActivation]
-			node.d = errors[i2] * deriv_function(node.o)
+			node.d = errors[i2] or errors[1] * deriv_function(node.o)
 		end
 	end
 end
