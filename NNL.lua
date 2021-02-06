@@ -82,9 +82,10 @@ local nn = NNL.nn
 nn.__index = nn
 
 -- JSON API, needs another library
+-- local json = require "modules/json"
 local jsonconfig = {
-	encode = function(...) return game.HttpService:JSONEncode(...) end;
-	decode = function(str) return game.HttpService:JSONDecode(str) end;
+	encode = function(s) return game.HttpService:JSONEncode(s) end; --json.encode;
+	decode = function(s) return game.HttpService:JSONDecode(s) end; --json.decode;
 	compress = nil;
 	decompress = nil;
 }
@@ -102,8 +103,8 @@ function nn.fromJSON(str)
 end
 
 function nn:toJSON()
-	local copy = tdeepcopy(orig, copies)
-	setmetatable(copy)
+	local copy = tdeepcopy(self)
+	setmetatable(copy, {})
 	-- Reset all the backprop node data
 	copy._lastinputs = nil
 	for _,layer in ipairs (self.layers) do
