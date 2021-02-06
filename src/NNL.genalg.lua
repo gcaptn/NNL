@@ -17,12 +17,12 @@ genalg.Settings = {
 }
 
 function genalg.Crossover(node1, node2)
-	if not random01() <= genalg.Settings.CrossoverChance then
+	if not (random01() <= genalg.Settings.CrossoverChance) then
 		return node1, node2
 	end
 	local newnode = blanknode()
 	local nweights = #node1.w
-	local crossoverpoint = math.random(2, nweights-1)	-- At what point do the weights switch
+	local crossoverpoint = math.random(2, math.max(2, nweights-1))	-- At what point do the weights switch
 	for i=1, nweights do
 		if i < crossoverpoint then -- Use node1's weights
 			newnode.w[i] = node1.w[i]
@@ -66,12 +66,14 @@ end
 
 genalg.population = {}
 local population = genalg.population
+population.__index = population
 
 function population.new(networks, networksettings)
 	local self = {
 		Networks = {};
 		Size = 0;
 	}
+	setmetatable(self,population)
 	local Type = type(networks)
 	if Type=="number" then
 		local t = {}
@@ -84,7 +86,8 @@ function population.new(networks, networksettings)
 	for _, network in pairs (networks) do 
 		network.Fitness = network.Fitness or 0;	-- Add a new network property for fitness
 	end
-
+	self.Networks = networks
+	return self
 end
 
 function population:Insert(network)
@@ -102,7 +105,7 @@ end
 function population:GetBestNetworks(n)
 	n = n or genalg.Settings.BestNetworkCount
 	table.sort(self.Networks, function(a,b)
-		return a.Fitness >= b.Fitness
+		return b.Fitness < a.Fitness
 	end)
 	local best = {}
 	for i=1, n do 
@@ -112,9 +115,10 @@ function population:GetBestNetworks(n)
 end
 
 function population:Evolve(bestnetworks)
+	bestnetworks = bestnetworks or self.Networks
 	local newbrains = {}
 	table.sort(self.Networks, function(a,b)
-		return a.Fitness >= b.Fitness
+		return b.Fitness < a.Fitness
 	end)
 	table.insert(newbrains, tdeepcopy(self.Networks[1]))
 	for i=1, #self.Networks-1, 2 do
@@ -132,6 +136,26 @@ end
 
 --[[ Test this
 
-]]
+math.randomseed(os.time())
+local NNL = require "NNL"
+local population = NNL.genalg.population.new(20)
 
-return NNL
+local y = {0.5}
+local x = {1, 0, 1}
+
+print(population.Networks[1]:Forward(x)[1])
+
+for generation = 1, 10 do
+	for i, brain in ipairs (population.Networks) do
+		local output = brain:Forward(x)
+		brain.Fitness = 1/math.abs(y[1]-output[1])
+	end
+	local fitness = population:GetTotalFitness()
+	print ("GENERATION "..generation..": "..fitness)
+	population:Evolve()
+end
+
+local best = population:GetBestNetworks(1)[1]
+print(best:Forward(x)[1])
+
+]]
