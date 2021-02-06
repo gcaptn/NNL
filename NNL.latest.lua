@@ -102,8 +102,9 @@ function nn.fromJSON(str)
 end
 
 function nn:toJSON()
-	local copy = tshallowcopy(self)
-	-- Reset the last output and deltas
+	local copy = tdeepcopy(orig, copies)
+	setmetatable(copy)
+	-- Reset all the backprop node data
 	copy._lastinputs = nil
 	for _,layer in ipairs (self.layers) do
 		for _, node in ipairs(layer) do
